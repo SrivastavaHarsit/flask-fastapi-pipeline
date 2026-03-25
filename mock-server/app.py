@@ -18,8 +18,8 @@ def health():
 
 @app.route("/api/customers")
 def get_customers():
-    page = request.args.get("page", 1, type=int)
-    limit = request.args.get("limit", 10, type=int)
+    page = max(1, request.args.get("page", 1, type=int))
+    limit = max(1, min(100, request.args.get("limit", 10, type=int)))
 
     start = (page - 1) * limit
     end = start + limit
