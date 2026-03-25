@@ -91,12 +91,18 @@ def upsert_customers(customers):
         connection.execute(UPSERT_CUSTOMERS_SQL, customers)
 
 
+def cleanup_staging():
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE IF EXISTS customers_staging"))
+
+
 def run_pipeline():
     """Fetch customers, land them with dlt, then upsert into PostgreSQL."""
     customers = fetch_all_customers()
+    pipeline_name = f"customer_pipeline_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
 
     pipeline = dlt.pipeline(
-        pipeline_name="customer_pipeline",
+        pipeline_name=pipeline_name,
         destination=dlt.destinations.postgres(DATABASE_URL),
         dataset_name="public"
     )
@@ -108,5 +114,7 @@ def run_pipeline():
     )
 
     upsert_customers(customers)
+    cleanup_staging()
+    pipeline.drop()
 
     return len(customers)
